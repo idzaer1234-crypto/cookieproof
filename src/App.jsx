@@ -11,11 +11,26 @@ const COOKIE_RPC = 'https://rpc.cookiescan.io'
 const COOKIE_EXPLORER = 'https://cookiescan.io'
 const MEMO_PROGRAM = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr')
 const STORAGE_KEY = 'cookieproof-records'
+const APP_URL = 'https://cookieproof-nine.vercel.app/'
 
 const connection = new Connection(COOKIE_RPC, 'confirmed')
 
 function getNightly() {
   return window?.nightly?.solana
+}
+
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+}
+
+function openInNightly() {
+  const target = encodeURIComponent(APP_URL)
+  const universal = `https://nightly.app/v1?network=solana&cluster=mainnet&url=${target}`
+  const custom = `nightly://v1?network=solana&cluster=mainnet&url=${target}`
+  window.location.href = universal
+  setTimeout(() => {
+    window.location.href = custom
+  }, 1200)
 }
 
 function friendlyError(error) {
@@ -33,6 +48,7 @@ export default function App() {
   const [status, setStatus] = useState('idle')
   const [notice, setNotice] = useState('')
   const [networkReady, setNetworkReady] = useState(false)
+  const [mobile, setMobile] = useState(false)
 
   const walletAddress = account?.address || ''
   const connected = Boolean(walletAddress)
@@ -43,6 +59,7 @@ export default function App() {
   )
 
   useEffect(() => {
+    setMobile(isMobileBrowser())
     try {
       setRecords(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
     } catch {
@@ -74,7 +91,13 @@ export default function App() {
     try {
       const nightly = getNightly()
       if (!nightly) {
-        throw new Error('Nightly Wallet was not detected. Install the Nightly browser extension and reload this page.')
+        setStatus('idle')
+        if (mobile) {
+          setNotice('Nightly is not injected in this mobile browser. Tap “Open in Nightly” to continue safely.')
+        } else {
+          setNotice('Nightly was not detected. Install Nightly or open this page inside the Nightly browser.')
+        }
+        return
       }
 
       const genesisHash = await connection.getGenesisHash()
@@ -265,9 +288,19 @@ export default function App() {
           <h2>{connected ? 'Connected' : 'Not connected'}</h2>
 
           {!connected ? (
-            <button className="secondary" onClick={connectNightly}>
-              Connect Nightly
-            </button>
+            <>
+              {mobile && (
+                <button className="secondary mobileNightly" onClick={openInNightly}>
+                  Open in Nightly
+                </button>
+              )}
+              <button className="secondary" onClick={connectNightly}>
+                Connect Nightly
+              </button>
+              {mobile && (
+                <p className="mobileHint">On Android, opening the app in Nightly lets the wallet inject securely into the dApp.</p>
+              )}
+            </>
           ) : (
             <>
               <div className="walletBox">

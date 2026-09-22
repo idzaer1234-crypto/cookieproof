@@ -100,11 +100,9 @@ export default function App() {
         return
       }
 
-      const genesisHash = await connection.getGenesisHash()
-      if (nightly.changeNetwork) {
-        await nightly.changeNetwork({ genesisHash, url: COOKIE_RPC })
-      }
-
+      // Connect first. On Nightly Mobile, calling changeNetwork() before the
+      // permission prompt can leave the in-app browser on a blank screen.
+      // Network switching is intentionally kept out of the initial connect flow.
       const connect = nightly.features?.['standard:connect']?.connect
       if (!connect) {
         throw new Error('This Nightly version does not expose the required Solana Wallet Standard connection feature.')
@@ -117,9 +115,17 @@ export default function App() {
       }
 
       setAccount(nextAccount)
-      setNetworkReady(true)
+
+      // Verify the Cookie Chain RPC is reachable without forcing a wallet network switch.
+      const cookieGenesisHash = await connection.getGenesisHash()
+      const activeGenesisHash = nightly.genesisHash
+      setNetworkReady(Boolean(activeGenesisHash && activeGenesisHash === cookieGenesisHash))
       setStatus('idle')
-      setNotice('Nightly connected to Cookie Chain.')
+      setNotice(
+        activeGenesisHash && activeGenesisHash === cookieGenesisHash
+          ? 'Nightly connected to Cookie Chain.'
+          : 'Nightly connected. Select Cookie Chain in Nightly before creating a proof.'
+      )
     } catch (error) {
       setStatus('idle')
       setNotice(friendlyError(error))

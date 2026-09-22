@@ -59,8 +59,19 @@ export default function App() {
       if (!connect) throw new Error('Nightly Wallet Standard connection is unavailable.')
       const result = await connect(), nextAccount = result?.accounts?.[0]
       if (!nextAccount?.address) throw new Error('Nightly did not return a Solana account.')
-      setAccount(nextAccount)
-      const cookieGenesisHash = await connection.getGenesisHash(), activeGenesisHash = nightly.genesisHash
+      let activeAccount = nextAccount
+      const cookieGenesisHash = await connection.getGenesisHash()
+      let activeGenesisHash = nightly.genesisHash
+
+      if (activeGenesisHash !== cookieGenesisHash && typeof nightly.changeNetwork === 'function') {
+        setNotice('Switching Nightly to Cookie Chain...')
+        await nightly.changeNetwork({ genesisHash: cookieGenesisHash, url: COOKIE_RPC })
+        const refreshed = await connect()
+        activeAccount = refreshed?.accounts?.[0] || activeAccount
+        activeGenesisHash = nightly.genesisHash
+      }
+
+      setAccount(activeAccount)
       setNetworkReady(Boolean(activeGenesisHash && activeGenesisHash === cookieGenesisHash))
       setStatus('idle'); setNotice(activeGenesisHash && activeGenesisHash === cookieGenesisHash ? 'Nightly connected to Cookie Chain.' : 'Nightly connected. Select Cookie Chain in Nightly before creating a proof.')
     } catch (error) { setStatus('idle'); setNotice(friendlyError(error)) }

@@ -38,6 +38,8 @@ textarea::placeholder { color:#686860; }
 .primary:disabled { opacity:.55; cursor:not-allowed; }
 .secondary { padding:13px 16px; color:#f7f4ec; background:#24241f; border:1px solid #4a4a40; }
 .secondary:hover { border-color:#ffb700; }
+.mobileNightly { margin-bottom:10px; border-color:#ffb700; }
+.mobileHint { margin:10px 0 0; color:#77766e; font-size:11px; line-height:1.55; }
 .notice { margin-top:14px; padding:11px 12px; color:#ffca45; background:#211f15; border:1px solid #4b401e; border-radius:10px; font-size:13px; line-height:1.5; }
 .side h2 { margin:9px 0 18px; }
 .walletBox,.balance { display:grid; gap:7px; padding:15px; background:#121210; border:1px solid #373730; border-radius:13px; }
